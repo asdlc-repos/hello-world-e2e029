@@ -1,0 +1,8 @@
+.git
+.logs
+.mcp-config.json
+Dockerfile
+.dockerignore
+.gitignore
+README.md
+workload.yaml

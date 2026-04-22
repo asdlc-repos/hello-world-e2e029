@@ -1,0 +1,7 @@
+.logs/
+.mcp-config.json
+hello-api
+*.exe
+*.out
+vendor/
+.DS_Store
