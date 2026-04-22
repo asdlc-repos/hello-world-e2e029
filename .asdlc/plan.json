@@ -1,0 +1,38 @@
+{
+  "strategy": "Single-Phase",
+  "overview": "Single independent component with no dependencies, implemented in one phase.",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Foundation Service",
+      "description": "The sole Hello World API service has no dependencies and can be built directly.",
+      "components": [
+        {
+          "name": "hello-api",
+          "componentType": "service",
+          "language": "Go",
+          "deployment": "Docker",
+          "responsibilities": [
+            "Serve GET / with a plain-text welcome message",
+            "Serve GET /hello returning 'Hello, World!' and reject non-GET methods with 405",
+            "Provide a fast GET /health endpoint for liveness checks",
+            "Return 404 for unknown paths and log each request",
+            "Support graceful shutdown and handle 100+ concurrent requests"
+          ],
+          "architectureContext": "Standalone HTTP service exposed on port 9090, deployed as a Docker container on Kubernetes. It has no upstream dependencies and is consumed directly by external HTTP clients.",
+          "keyConsiderations": [
+            "Use http.ServeMux with explicit method checks in /hello handler to return 405 with Allow: GET header",
+            "Enforce exact path match ('/' only) in root handler to return 404 for unmatched paths",
+            "Set http.Server timeouts (Read=5s, Write=10s, Idle=60s) and implement SIGINT/SIGTERM graceful shutdown",
+            "Keep /health handler free of external calls to ensure sub-100ms response",
+            "Multi-stage Dockerfile (golang:1.22-alpine build, distroless/alpine runtime) running as non-root, EXPOSE 9090"
+          ],
+          "apiContract": "openapi: 3.0.3\ninfo:\n  title: Hello World API\n  version: 1.0.0\n  description: Minimal Hello World HTTP API\nservers:\n  - url: http://localhost:9090\npaths:\n  /:\n    get:\n      summary: Welcome message\n      responses:\n        '200':\n          description: Welcome message\n          content:\n            text/plain:\n              schema:\n                type: string\n  /hello:\n    get:\n      summary: Returns Hello, World!\n      responses:\n        '200':\n          description: Hello message\n          content:\n            text/plain:\n              schema:\n                type: string\n                example: Hello, World!\n        '405':\n          description: Method not allowed\n  /health:\n    get:\n      summary: Health check\n      responses:\n        '200':\n          description: Service is healthy\n          content:\n            text/plain:\n              schema:\n                type: string\n",
+          "dependencies": []
+        }
+      ]
+    }
+  ],
+  "sourceSpec": "spec-v1",
+  "sourceDesign": "design-v1"
+}
