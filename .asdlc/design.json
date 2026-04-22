@@ -1,0 +1,27 @@
+{
+  "overview": "A single Go-based HTTP service exposing a minimal Hello World REST API. The service handles root, hello, and health endpoints with proper HTTP method and status code handling, deployed as a Docker container on Kubernetes.",
+  "requirements": [
+    "Expose GET /hello returning 'Hello, World!' in plain text with status 200",
+    "Expose GET / returning a welcome message",
+    "Expose GET /health returning 200 within 100ms",
+    "Return 405 for unsupported methods on /hello",
+    "Return 404 for non-existent endpoints",
+    "Respond to content with content-type text/plain",
+    "Handle at least 100 concurrent requests",
+    "Respond within 200ms under normal load"
+  ],
+  "components": [
+    {
+      "name": "hello-api",
+      "componentType": "service",
+      "language": "Go",
+      "dependsOn": [],
+      "entrypoint": "deployment/service",
+      "buildpack": "docker",
+      "appPath": "/hello-api",
+      "openAPISpec": "openapi: 3.0.3\ninfo:\n  title: Hello World API\n  version: 1.0.0\n  description: Minimal Hello World HTTP API\nservers:\n  - url: http://localhost:9090\npaths:\n  /:\n    get:\n      summary: Welcome message\n      responses:\n        '200':\n          description: Welcome message\n          content:\n            text/plain:\n              schema:\n                type: string\n  /hello:\n    get:\n      summary: Returns Hello, World!\n      responses:\n        '200':\n          description: Hello message\n          content:\n            text/plain:\n              schema:\n                type: string\n                example: Hello, World!\n        '405':\n          description: Method not allowed\n  /health:\n    get:\n      summary: Health check\n      responses:\n        '200':\n          description: Service is healthy\n          content:\n            text/plain:\n              schema:\n                type: string\n",
+      "componentAgentInstructions": "Implement a Go HTTP service using net/http listening on port 9090.\n\nEndpoints:\n- GET / → 200, text/plain, body: 'Welcome to the Hello World API'\n- GET /hello → 200, Content-Type: text/plain, body: 'Hello, World!'\n- Non-GET on /hello → 405 Method Not Allowed (set Allow: GET header)\n- GET /health → 200, text/plain, body: 'OK' (must respond in \u003c100ms; no external calls)\n- Any other path → 404 Not Found\n\nImplementation details:\n- Use http.ServeMux with explicit handlers; in the /hello handler check r.Method and return 405 if not GET.\n- In the root handler, check r.URL.Path == '/' exactly, else return 404.\n- Set Content-Type: text/plain; charset=utf-8 on all responses.\n- Use http.Server with ReadTimeout=5s, WriteTimeout=10s, IdleTimeout=60s.\n- Log each request (method, path, status) to stdout.\n- Include graceful shutdown on SIGINT/SIGTERM.\n\nDockerfile: multi-stage build with golang:1.22-alpine for build and alpine or distroless for runtime. EXPOSE 9090. Binary runs as non-root.\n\nModule name: hello-api. Single main.go is acceptable. Ensure the service supports at least 100 concurrent requests (default net/http goroutine-per-request is sufficient)."
+    }
+  ],
+  "sourceSpec": "spec-v1"
+}
